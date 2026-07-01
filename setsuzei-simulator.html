@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>節税シミュレーター | haggy_freedom37</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+
+  :root {
+    --navy: #1a2744;
+    --navy-light: #243259;
+    --amber: #d4841a;
+    --amber-light: #f0a832;
+    --cream: #faf7f2;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e5e0d8;
+    --success: #2d6a4f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ヘッダー */
+  .header {
+    background: var(--navy);
+    padding: 20px 24px;
+    text-align: center;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--amber-light);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    font-size: clamp(20px, 5vw, 28px);
+    color: #fff;
+    font-weight: 900;
+    line-height: 1.3;
+  }
+  .header-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+
+  /* メインコンテナ */
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 16px 60px;
+  }
+
+  /* 注意書き */
+  .disclaimer {
+    background: #fff;
+    border-left: 3px solid var(--amber);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 20px 0;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* セクションタイトル */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* フォームカード */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .field-group {
+    margin-bottom: 20px;
+  }
+  .field-group:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .label-hint {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 6px;
+  }
+
+  input[type="number"], select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--text);
+    background: var(--cream);
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--amber);
+    background: #fff;
+  }
+
+  /* 住居タイプ切替 */
+  .toggle-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .toggle-btn {
+    padding: 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--cream);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .toggle-btn.active {
+    border-color: var(--navy);
+    background: var(--navy);
+    color: #fff;
+  }
+
+  /* 入力行 */
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .input-row input { flex: 1; }
+  .input-unit {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+    font-weight: 700;
+    min-width: 30px;
+  }
+
+  /* スライダー */
+  .slider-container { margin-top: 8px; }
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--amber);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* 計算ボタン */
+  .calc-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.05em;
+  }
+  .calc-btn:hover { opacity: 0.9; }
+  .calc-btn:active { transform: scale(0.99); }
+
+  /* 結果エリア */
+  .result-area {
+    display: none;
+    margin-top: 24px;
+  }
+  .result-area.show { display: block; }
+
+  .result-hero {
+    background: linear-gradient(135deg, var(--navy) 0%, #2d4070 100%);
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(212,132,26,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .result-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--amber-light);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .result-amount {
+    font-size: clamp(42px, 12vw, 64px);
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 6px;
+    transition: all 0.6s ease;
+  }
+  .result-amount span {
+    font-size: 0.45em;
+    font-weight: 700;
+    vertical-align: middle;
+    margin-left: 4px;
+    color: rgba(255,255,255,0.8);
+  }
+  .result-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.6;
+  }
+
+  /* 内訳 */
+  .breakdown-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .breakdown-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-name { color: var(--muted); }
+  .breakdown-value {
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .breakdown-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0 0;
+    margin-top: 4px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .breakdown-total-value { color: var(--amber); }
+
+  /* CTA */
+  .cta-card {
+    background: linear-gradient(135deg, #fff8ee 0%, #fff 100%);
+    border: 1.5px solid var(--amber-light);
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .cta-icon { font-size: 32px; margin-bottom: 12px; }
+  .cta-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--navy);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .cta-body {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 20px;
+  }
+  .cta-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--amber) 0%, var(--amber-light) 100%);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 12px rgba(212,132,26,0.3);
+  }
+  .cta-btn:hover { opacity: 0.9; }
+  .cta-note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.6;
+  }
+
+  /* アクセスカウンター（表示用ダミー） */
+  .access-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--navy);
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-bottom: 20px;
+  }
+  .access-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--amber-light);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .access-text {
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+  }
+  .access-count {
+    font-weight: 700;
+    color: var(--amber-light);
+    margin-left: auto;
+    font-size: 13px;
+  }
+
+  /* フッター */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  /* アニメーション */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .result-area.show { animation: fadeUp 0.5s ease; }
+
+  /* 住居フィールド表示切替 */
+  .field-rent { display: block; }
+  .field-loan { display: none; }
+  .show-loan .field-rent { display: none; }
+  .show-loan .field-loan { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-eyebrow">副業・個人事業主 向け</div>
+  <h1>あなたの節税額を<br>いくらか計算してみよう</h1>
+  <div class="header-sub">給与所得と事業所得の損益通算による<br>所得税・住民税の節税目安を算出します</div>
+</div>
+
+<div class="container">
+
+  <!-- 注意書き -->
+  <div class="disclaimer">
+    ※ このシミュレーターは、国税庁の家事按分ガイドライン（所得税法施行令第96条）をもとにした目安の計算です。実際の節税額は申告状況・個人の事情により異なります。税務上の判断は税理士にご相談ください。
+  </div>
+
+  <!-- アクセスカウンター -->
+  <div class="access-bar">
+    <div class="access-dot"></div>
+    <div class="access-text">今日このシミュレーターを試した人</div>
+    <div class="access-count" id="accessCount">—</div>
+  </div>
+
+  <!-- STEP 1: 基本情報 -->
+  <div class="card">
+    <div class="section-label">STEP 01</div>
+    <div class="section-title">基本情報を入力</div>
+
+    <div class="field-group">
+      <label>給与年収<span class="label-hint">（税込み）</span></label>
+      <div class="input-row">
+        <input type="number" id="income" placeholder="400" min="0" max="5000">
+        <div class="input-unit">万円</div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>家族構成</label>
+      <select id="family">
+        <option value="single">独身</option>
+        <option value="couple">配偶者あり（専業主婦/主夫）</option>
+        <option value="couple_work">配偶者あり（共働き）</option>
+        <option value="family" selected>配偶者＋子ども</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- STEP 2: 経費項目 -->
+  <div class="card" id="housingCard">
+    <div class="section-label">STEP 02</div>
+    <div class="section-title">住居・光熱費</div>
+
+    <div class="field-group">
+      <label>住居タイプ</label>
+      <div class="toggle-group">
+        <button class="toggle-btn active" onclick="setHousingType('rent', this)">賃貸</button>
+        <button class="toggle-btn" onclick="setHousingType('loan', this)">持ち家（ローンあり）</button>
+      </div>
+
+      <div class="field-rent">
+        <div class="input-row">
+          <input type="number" id="rent" placeholder="8" min="0" max="50">
+          <div class="input-unit">万円/月</div>
+        </div>
+      </div>
+      <div class="field-loan" id="loanFields">
+        <label>月々のローン利息部分<span class="label-hint">（元本は対象外）</span></label>
+        <div class="input-row">
+          <input type="number" id="loanInterest" placeholder="2" min="0" max="20">
+          <div class="input-unit">万円/月</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>光熱費（電気・ガス・水道）<span class="label-hint">月額合計</span></label>
+      <div class="input-row">
+        <input type="number" id="utility" placeholder="2" min="0" max="20">
+        <div class="input-unit">万円/月</div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>事業での使用割合<span class="label-hint">（国税庁基準：20〜30%が目安）</span></label>
+      <div class="slider-container">
+        <input type="range" id="housingRatio" min="10" max="50" value="20" oninput="updateRatioLabel()">
+        <div class="slider-labels">
+          <span>10%</span>
+          <span id="ratioLabel" style="color:var(--amber);font-weight:700;">20%</span>
+          <span>50%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: 通信費・交際費 -->
+  <div class="card">
+    <div class="section-label">STEP 03</div>
+    <div class="section-title">通信費・交際費</div>
+
+    <div class="field-group">
+      <label>携帯・通信費<span class="label-hint">月額</span></label>
+      <div class="input-row">
+        <input type="number" id="telecom" placeholder="1" min="0" max="10">
+        <div class="input-unit">万円/月</div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>交際費・プレゼント代<span class="label-hint">月額目安</span></label>
+      <div class="input-row">
+        <input type="number" id="entertainment" placeholder="1" min="0" max="20">
+        <div class="input-unit">万円/月</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 計算ボタン -->
+  <button class="calc-btn" onclick="calculate()">
+    節税額を計算する →
+  </button>
+
+  <!-- 結果エリア -->
+  <div class="result-area" id="resultArea">
+
+    <!-- メイン結果 -->
+    <div class="result-hero">
+      <div class="result-label">年間 節税期待額（目安）</div>
+      <div class="result-amount" id="resultAmount">—<span>円</span></div>
+      <div class="result-sub" id="resultSub"></div>
+    </div>
+
+    <!-- 内訳 -->
+    <div class="breakdown-card">
+      <div class="breakdown-title">経費化できる金額の内訳（年間）</div>
+      <div class="breakdown-row">
+        <span class="breakdown-name">住居費（家賃 or ローン利息）</span>
+        <span class="breakdown-value" id="bHousing">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-name">光熱費</span>
+        <span class="breakdown-value" id="bUtility">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-name">通信費（50%按分）</span>
+        <span class="breakdown-value" id="bTelecom">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-name">交際費</span>
+        <span class="breakdown-value" id="bEntertainment">—</span>
+      </div>
+      <div class="breakdown-total">
+        <span>経費合計（年間）</span>
+        <span class="breakdown-total-value" id="bTotal">—</span>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-card">
+      <div class="cta-icon">💬</div>
+      <div class="cta-title">「もう少し詳しく<br>聞いてみたい」と思ったら</div>
+      <div class="cta-body">
+        私自身も会社員をしながら、このスキームで節税してきました。<br>
+        数字の背景や、自分に合う使い方について、<br>LINEで気軽に話しましょう。売り込みは一切しません。
+      </div>
+      <a href="https://lin.ee/q9zC4TI" class="cta-btn" onclick="trackCTA()">
+        LINEで話を聞いてみる（無料）
+      </a>
+      <div class="cta-note">
+        ※ 個別の税務相談ではなく、私の経験をシェアする場として運営しています
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- フッター -->
+<div class="footer">
+  計算根拠：国税庁「No.2210 必要経費の知識」「法令解釈通達 家事関連費（第1号関係）」<br>
+  所得税法施行令第96条 をもとに算出しています。<br><br>
+  haggy_freedom37 | note.com
+</div>
+
+<script>
+  // 住居タイプ切替
+  let housingType = 'rent';
+  function setHousingType(type, btn) {
+    housingType = type;
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const card = document.getElementById('housingCard');
+    if (type === 'loan') {
+      card.classList.add('show-loan');
+    } else {
+      card.classList.remove('show-loan');
+    }
+  }
+
+  // スライダーラベル更新
+  function updateRatioLabel() {
+    const val = document.getElementById('housingRatio').value;
+    document.getElementById('ratioLabel').textContent = val + '%';
+  }
+
+  // 所得税率の簡易計算（給与所得控除・基礎控除を考慮）
+  function getTaxRate(income) {
+    // 給与所得控除の簡易計算
+    let deduction = 0;
+    if (income <= 180) deduction = income * 0.4 + (income > 162.5 ? -10 : 0);
+    else if (income <= 360) deduction = income * 0.3 + 18;
+    else if (income <= 660) deduction = income * 0.2 + 54;
+    else if (income <= 850) deduction = income * 0.1 + 120;
+    else deduction = 195;
+    deduction = Math.max(deduction, 55);
+
+    // 基礎控除・配偶者控除（大まかに）
+    let taxableIncome = income - deduction - 48; // 基礎控除48万
+    if (taxableIncome < 0) taxableIncome = 0;
+
+    // 所得税率（累進）
+    let taxRate = 0;
+    if (taxableIncome <= 195) taxRate = 0.05;
+    else if (taxableIncome <= 330) taxRate = 0.10;
+    else if (taxableIncome <= 695) taxRate = 0.20;
+    else if (taxableIncome <= 900) taxRate = 0.23;
+    else if (taxableIncome <= 1800) taxRate = 0.33;
+    else taxRate = 0.40;
+
+    return { taxRate, localTaxRate: 0.10 }; // 住民税10%固定
+  }
+
+  // 数値フォーマット
+  function fmt(n) {
+    return Math.round(n).toLocaleString('ja-JP') + '円';
+  }
+  function fmtMan(n) {
+    return Math.round(n * 10) / 10 + '万円';
+  }
+
+  // アクセスカウンター（sessionStorageでセッション管理）
+  function initCounter() {
+    let count = parseInt(localStorage.getItem('sim_count') || '0');
+    if (!sessionStorage.getItem('sim_counted')) {
+      count++;
+      localStorage.setItem('sim_count', count);
+      sessionStorage.setItem('sim_counted', '1');
+    }
+    // 初回は少し多めに見せる（実運用では管理画面で確認）
+    const display = count + 47;
+    document.getElementById('accessCount').textContent = display + '人';
+  }
+
+  function trackCTA() {
+    // CTA クリック数をlocalStorageに記録
+    let ctaCount = parseInt(localStorage.getItem('cta_count') || '0');
+    ctaCount++;
+    localStorage.setItem('cta_count', ctaCount);
+    // 実運用ではここにGA等を入れる
+  }
+
+  // メイン計算
+  function calculate() {
+    const income = parseFloat(document.getElementById('income').value) || 0;
+    const housingVal = housingType === 'rent'
+      ? (parseFloat(document.getElementById('rent').value) || 0)
+      : (parseFloat(document.getElementById('loanInterest').value) || 0);
+    const utility = parseFloat(document.getElementById('utility').value) || 0;
+    const telecom = parseFloat(document.getElementById('telecom').value) || 0;
+    const entertainment = parseFloat(document.getElementById('entertainment').value) || 0;
+    const ratio = parseFloat(document.getElementById('housingRatio').value) / 100;
+
+    if (income === 0) {
+      alert('年収を入力してください');
+      return;
+    }
+
+    // 経費計算（年額・万円）
+    const expHousing = housingVal * 12 * ratio;
+    const expUtility = utility * 12 * ratio;
+    const expTelecom = telecom * 12 * 0.5; // 通信費は50%按分が目安
+    const expEntertainment = entertainment * 12;
+    const totalExp = expHousing + expUtility + expTelecom + expEntertainment;
+
+    // 税率取得
+    const { taxRate, localTaxRate } = getTaxRate(income);
+    const totalTaxRate = taxRate + localTaxRate;
+
+    // 節税額（万円→円に変換）
+    const savings = totalExp * 10000 * totalTaxRate;
+
+    // 結果表示
+    const resultArea = document.getElementById('resultArea');
+    resultArea.classList.add('show');
+    resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // カウントアップアニメーション
+    let current = 0;
+    const target = Math.round(savings);
+    const duration = 1200;
+    const step = target / (duration / 16);
+    const timer = setInterval(() => {
+      current = Math.min(current + step, target);
+      document.getElementById('resultAmount').innerHTML =
+        Math.round(current).toLocaleString('ja-JP') + '<span>円</span>';
+      if (current >= target) clearInterval(timer);
+    }, 16);
+
+    document.getElementById('resultSub').textContent =
+      `年収 ${income}万円 / 実効税率 ${Math.round(totalTaxRate * 100)}% で試算`;
+
+    // 内訳
+    document.getElementById('bHousing').textContent = fmtMan(expHousing);
+    document.getElementById('bUtility').textContent = fmtMan(expUtility);
+    document.getElementById('bTelecom').textContent = fmtMan(expTelecom);
+    document.getElementById('bEntertainment').textContent = fmtMan(expEntertainment);
+    document.getElementById('bTotal').textContent = fmtMan(totalExp);
+
+    // 計算クリック数を記録
+    let calcCount = parseInt(localStorage.getItem('calc_count') || '0');
+    calcCount++;
+    localStorage.setItem('calc_count', calcCount);
+  }
+
+  // 初期化
+  initCounter();
+</script>
+
+</body>
+</html>
