@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2PPFT7DQGR"></script>
-  <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-2PPFT7DQGR');
-  </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>節税シミュレーター | haggy_freedom37</title>
@@ -24,6 +16,9 @@
     --text: #1a1a2e;
     --muted: #6b7280;
     --border: #e5e0d8;
+    --error: #dc2626;
+    --error-bg: #fef2f2;
+    --error-border: #fca5a5;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -102,20 +97,50 @@
   .field-group { margin-bottom: 20px; }
   .field-group:last-child { margin-bottom: 0; }
 
+  /* ラベル行 */
+  .label-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
   label {
-    display: block;
     font-size: 13px;
     font-weight: 700;
     color: var(--navy);
-    margin-bottom: 6px;
   }
   .label-hint {
     font-size: 11px;
     font-weight: 400;
     color: var(--muted);
-    margin-left: 6px;
   }
 
+  /* 必須バッジ */
+  .badge-required {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--error);
+    border-radius: 4px;
+    padding: 2px 6px;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+  /* 任意バッジ */
+  .badge-optional {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    background: #f3f4f6;
+    border-radius: 4px;
+    padding: 2px 6px;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+
+  /* インプット */
   input[type="number"], select {
     width: 100%;
     padding: 12px 14px;
@@ -125,13 +150,41 @@
     font-family: 'Noto Sans JP', sans-serif;
     color: var(--text);
     background: var(--cream);
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.2s;
     -webkit-appearance: none;
   }
   input[type="number"]:focus, select:focus {
     outline: none;
     border-color: var(--amber);
     background: #fff;
+  }
+
+  /* プレースホルダーを薄く */
+  input[type="number"]::placeholder {
+    color: #c4c9d4;
+    font-weight: 400;
+  }
+
+  /* エラー状態 */
+  .field-group.has-error input,
+  .field-group.has-error select {
+    border-color: var(--error-border);
+    background: var(--error-bg);
+  }
+  .field-group.has-error input:focus,
+  .field-group.has-error select:focus {
+    border-color: var(--error);
+    background: #fff;
+  }
+  .error-msg {
+    display: none;
+    font-size: 12px;
+    color: var(--error);
+    margin-top: 5px;
+    font-weight: 500;
+  }
+  .field-group.has-error .error-msg {
+    display: block;
   }
 
   .toggle-group {
@@ -173,7 +226,6 @@
     min-width: 30px;
   }
 
-  /* 固定割合バッジ */
   .ratio-fixed {
     display: inline-flex;
     align-items: center;
@@ -188,7 +240,6 @@
   }
   .ratio-fixed strong { color: var(--amber); font-size: 15px; }
 
-  /* 住居フィールド表示切替 */
   .field-rent { display: block; }
   .field-loan { display: none; }
   .show-loan .field-rent { display: none; }
@@ -412,16 +463,25 @@
     <div class="section-label">STEP 01</div>
     <div class="section-title">基本情報</div>
 
-    <div class="field-group">
-      <label>給与年収<span class="label-hint">（税込み）</span></label>
+    <div class="field-group" id="fg-income">
+      <div class="label-row">
+        <label for="income">給与年収</label>
+        <span class="badge-required">必須</span>
+        <span class="label-hint">（税込み）</span>
+      </div>
       <div class="input-row">
-        <input type="number" id="income" placeholder="400" min="0" max="5000">
+        <input type="number" id="income" placeholder="例：400" min="0" max="5000"
+          oninput="clearError('fg-income')">
         <div class="input-unit">万円</div>
       </div>
+      <div class="error-msg">年収を入力してください</div>
     </div>
 
     <div class="field-group">
-      <label>家族構成</label>
+      <div class="label-row">
+        <label for="family">家族構成</label>
+        <span class="badge-required">必須</span>
+      </div>
       <select id="family">
         <option value="single">独身</option>
         <option value="couple">配偶者あり（専業主婦/主夫）</option>
@@ -436,38 +496,60 @@
     <div class="section-label">STEP 02</div>
     <div class="section-title">住居・光熱費</div>
 
-    <div class="field-group">
-      <label>住居タイプ</label>
+    <div class="field-group" id="fg-housing">
+      <div class="label-row">
+        <label>住居タイプ</label>
+        <span class="badge-required">必須</span>
+      </div>
       <div class="toggle-group">
         <button class="toggle-btn active" onclick="setHousingType('rent', this)">賃貸</button>
         <button class="toggle-btn" onclick="setHousingType('loan', this)">持ち家（ローンあり）</button>
       </div>
 
       <div class="field-rent">
+        <div class="label-row" style="margin-bottom:6px;">
+          <label for="rent">家賃</label>
+          <span class="badge-required">必須</span>
+        </div>
         <div class="input-row">
-          <input type="number" id="rent" placeholder="8" min="0" max="50">
+          <input type="number" id="rent" placeholder="例：8" min="0" max="50"
+            oninput="clearError('fg-housing')">
           <div class="input-unit">万円/月</div>
         </div>
       </div>
       <div class="field-loan">
-        <label>月々のローン利息部分<span class="label-hint">（元本は対象外）</span></label>
+        <div class="label-row" style="margin-bottom:6px;">
+          <label for="loanInterest">月々のローン利息部分</label>
+          <span class="badge-required">必須</span>
+          <span class="label-hint">（元本は対象外）</span>
+        </div>
         <div class="input-row">
-          <input type="number" id="loanInterest" placeholder="2" min="0" max="20">
+          <input type="number" id="loanInterest" placeholder="例：2" min="0" max="20"
+            oninput="clearError('fg-housing')">
           <div class="input-unit">万円/月</div>
         </div>
       </div>
+      <div class="error-msg">住居費を入力してください</div>
     </div>
 
-    <div class="field-group">
-      <label>光熱費（電気・ガス・水道）<span class="label-hint">月額合計</span></label>
+    <div class="field-group" id="fg-utility">
+      <div class="label-row">
+        <label for="utility">光熱費（電気・ガス・水道）</label>
+        <span class="badge-required">必須</span>
+        <span class="label-hint">月額合計</span>
+      </div>
       <div class="input-row">
-        <input type="number" id="utility" placeholder="2" min="0" max="20">
+        <input type="number" id="utility" placeholder="例：2" min="0" max="20"
+          oninput="clearError('fg-utility')">
         <div class="input-unit">万円/月</div>
       </div>
+      <div class="error-msg">光熱費を入力してください</div>
     </div>
 
     <div class="field-group">
-      <label>事業での使用割合</label>
+      <div class="label-row">
+        <label>事業での使用割合</label>
+      </div>
       <div class="ratio-fixed">
         国税庁の目安に基づき <strong>20%</strong> で自動計算しています
       </div>
@@ -480,41 +562,61 @@
     <div class="section-title">通信費・交際費・その他</div>
 
     <div class="field-group">
-      <label>携帯・通信費<span class="label-hint">月額（50%按分で計算）</span></label>
+      <div class="label-row">
+        <label for="telecom">携帯・通信費</label>
+        <span class="badge-optional">任意</span>
+        <span class="label-hint">月額（50%按分）</span>
+      </div>
       <div class="input-row">
-        <input type="number" id="telecom" placeholder="1" min="0" max="10">
+        <input type="number" id="telecom" placeholder="例：1">
         <div class="input-unit">万円/月</div>
       </div>
     </div>
 
     <div class="field-group">
-      <label>交際費・プレゼント代<span class="label-hint">月額目安</span></label>
+      <div class="label-row">
+        <label for="entertainment">交際費・プレゼント代</label>
+        <span class="badge-optional">任意</span>
+        <span class="label-hint">月額目安</span>
+      </div>
       <div class="input-row">
-        <input type="number" id="entertainment" placeholder="1" min="0" max="20">
+        <input type="number" id="entertainment" placeholder="例：1">
         <div class="input-unit">万円/月</div>
       </div>
     </div>
 
     <div class="field-group">
-      <label>車両費<span class="label-hint">ガソリン・車検・保険・自動車税（月換算・50%按分）</span></label>
+      <div class="label-row">
+        <label for="car">車両費</label>
+        <span class="badge-optional">任意</span>
+        <span class="label-hint">ガソリン・車検・保険・自動車税（月換算・50%按分）</span>
+      </div>
       <div class="input-row">
-        <input type="number" id="car" placeholder="1.5" min="0" max="20">
+        <input type="number" id="car" placeholder="例：1.5">
         <div class="input-unit">万円/月</div>
       </div>
     </div>
 
     <div class="field-group">
-      <label>サブスク・ツール代<span class="label-hint">月額（動画・音楽・アプリ等・50%按分）</span></label>
+      <div class="label-row">
+        <label for="subscription">サブスク・ツール代</label>
+        <span class="badge-optional">任意</span>
+        <span class="label-hint">月額（動画・音楽・アプリ等・50%按分）</span>
+      </div>
       <div class="input-row">
-        <input type="number" id="subscription" placeholder="0.5" min="0" max="10">
+        <input type="number" id="subscription" placeholder="例：0.5">
         <div class="input-unit">万円/月</div>
       </div>
     </div>
 
     <div class="field-group">
-      <label>書籍・セミナー代<span class="label-hint">月額目安</span></label>
+      <div class="label-row">
+        <label for="books">書籍・セミナー代</label>
+        <span class="badge-optional">任意</span>
+        <span class="label-hint">月額目安</span>
+      </div>
       <div class="input-row">
-        <input type="number" id="books" placeholder="0.5" min="0" max="10">
+        <input type="number" id="books" placeholder="例：0.5">
         <div class="input-unit">万円/月</div>
       </div>
     </div>
@@ -526,7 +628,6 @@
 
   <!-- 結果 -->
   <div class="result-area" id="resultArea">
-
     <div class="result-hero">
       <div class="result-label">年間 節税期待額（目安）</div>
       <div class="result-amount" id="resultAmount">—<span>円</span></div>
@@ -583,8 +684,8 @@
         ※ 個別の税務相談ではなく、私の経験をシェアする場として運営しています
       </div>
     </div>
-
   </div>
+
 </div>
 
 <div class="footer">
@@ -602,6 +703,17 @@
     btn.classList.add('active');
     const card = document.getElementById('housingCard');
     type === 'loan' ? card.classList.add('show-loan') : card.classList.remove('show-loan');
+    clearError('fg-housing');
+  }
+
+  function clearError(id) {
+    const fg = document.getElementById(id);
+    if (fg) fg.classList.remove('has-error');
+  }
+
+  function showError(id) {
+    const fg = document.getElementById(id);
+    if (fg) fg.classList.add('has-error');
   }
 
   function getTaxRate(income) {
@@ -638,28 +750,51 @@
   }
 
   function calculate() {
-    const income = parseFloat(document.getElementById('income').value) || 0;
-    if (income === 0) { alert('年収を入力してください'); return; }
+    // バリデーション
+    let hasError = false;
+
+    const income = parseFloat(document.getElementById('income').value);
+    if (!income || income <= 0) {
+      showError('fg-income');
+      hasError = true;
+    }
 
     const housingVal = housingType === 'rent'
-      ? (parseFloat(document.getElementById('rent').value) || 0)
-      : (parseFloat(document.getElementById('loanInterest').value) || 0);
-    const utility       = parseFloat(document.getElementById('utility').value) || 0;
+      ? parseFloat(document.getElementById('rent').value)
+      : parseFloat(document.getElementById('loanInterest').value);
+    if (!housingVal || housingVal <= 0) {
+      showError('fg-housing');
+      hasError = true;
+    }
+
+    const utility = parseFloat(document.getElementById('utility').value);
+    if (!utility || utility <= 0) {
+      showError('fg-utility');
+      hasError = true;
+    }
+
+    if (hasError) {
+      // 最初のエラー箇所にスクロール
+      const firstError = document.querySelector('.has-error');
+      if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    // 任意項目
     const telecom       = parseFloat(document.getElementById('telecom').value) || 0;
     const entertainment = parseFloat(document.getElementById('entertainment').value) || 0;
     const car           = parseFloat(document.getElementById('car').value) || 0;
     const subscription  = parseFloat(document.getElementById('subscription').value) || 0;
     const books         = parseFloat(document.getElementById('books').value) || 0;
 
-    const RATIO = 0.20; // 固定20%
-
-    const expHousing       = housingVal * 12 * RATIO;
-    const expUtility        = utility * 12 * RATIO;
-    const expTelecom        = telecom * 12 * 0.5;
-    const expEntertainment  = entertainment * 12;
-    const expCar            = car * 12 * 0.5;
-    const expSub            = subscription * 12 * 0.5;
-    const expBooks          = books * 12;
+    const RATIO = 0.20;
+    const expHousing      = housingVal * 12 * RATIO;
+    const expUtility       = utility * 12 * RATIO;
+    const expTelecom       = telecom * 12 * 0.5;
+    const expEntertainment = entertainment * 12;
+    const expCar           = car * 12 * 0.5;
+    const expSub           = subscription * 12 * 0.5;
+    const expBooks         = books * 12;
     const totalExp = expHousing + expUtility + expTelecom + expEntertainment + expCar + expSub + expBooks;
 
     const { taxRate, localTaxRate } = getTaxRate(income);
@@ -683,14 +818,14 @@
     document.getElementById('resultSub').textContent =
       `年収 ${income}万円 ／ 実効税率 ${Math.round(totalTaxRate * 100)}% で試算`;
 
-    document.getElementById('bHousing').textContent       = fmtMan(expHousing);
-    document.getElementById('bUtility').textContent        = fmtMan(expUtility);
-    document.getElementById('bTelecom').textContent        = fmtMan(expTelecom);
-    document.getElementById('bEntertainment').textContent  = fmtMan(expEntertainment);
-    document.getElementById('bCar').textContent            = fmtMan(expCar);
-    document.getElementById('bSub').textContent            = fmtMan(expSub);
-    document.getElementById('bBooks').textContent          = fmtMan(expBooks);
-    document.getElementById('bTotal').textContent          = fmtMan(totalExp);
+    document.getElementById('bHousing').textContent      = fmtMan(expHousing);
+    document.getElementById('bUtility').textContent       = fmtMan(expUtility);
+    document.getElementById('bTelecom').textContent       = fmtMan(expTelecom);
+    document.getElementById('bEntertainment').textContent = fmtMan(expEntertainment);
+    document.getElementById('bCar').textContent           = fmtMan(expCar);
+    document.getElementById('bSub').textContent           = fmtMan(expSub);
+    document.getElementById('bBooks').textContent         = fmtMan(expBooks);
+    document.getElementById('bTotal').textContent         = fmtMan(totalExp);
 
     let c = parseInt(localStorage.getItem('calc_count') || '0') + 1;
     localStorage.setItem('calc_count', c);
